@@ -1343,21 +1343,356 @@ class CryptoDashboard:
         lower_band = rolling_mean - (rolling_std * num_std)
         return upper_band, lower_band
     
-    def run(self):
-        """Exécute le dashboard"""
-        self.display_header()
-        self.display_key_metrics()
-        self.display_crypto_cards()
-        self.create_price_overview()
-        self.create_blockchain_analysis()
-        self.create_technical_analysis()
+    def create_sidebar(self):
+        """Crée la sidebar avec les contrôles"""
+        st.sidebar.markdown("## 🎛️ CONTRÔLES D'ANALYSE")
+        
+        # Catégories à afficher
+        st.sidebar.markdown("### 🏷️ Catégories à surveiller")
+        categories = list(self.current_data['categorie'].unique())
+        categories_selectionnees = st.sidebar.multiselect(
+            "Sélectionnez les catégories:",
+            categories,
+            default=categories
+        )
+        
+        # Période d'analyse
+        st.sidebar.markdown("### 📅 Période d'analyse")
+        date_debut = st.sidebar.date_input("Date de début", 
+                                         value=datetime.now() - timedelta(days=365))
+        date_fin = st.sidebar.date_input("Date de fin", 
+                                       value=datetime.now())
+        
+        # Options d'analyse
+        st.sidebar.markdown("### ⚙️ Options d'analyse")
+        auto_refresh = st.sidebar.checkbox("Rafraîchissement automatique", value=True)
+        show_advanced = st.sidebar.checkbox("Indicateurs avancés", value=True)
+        alert_threshold = st.sidebar.slider("Seuil d'alerte (%)", 1.0, 10.0, 3.0)
         
         # Bouton de rafraîchissement
-        if st.button("🔄 Rafraîchir les données"):
+        if st.sidebar.button("🔄 Rafraîchir les données"):
             self.update_live_data()
             st.rerun()
+        
+        # Alertes en temps réel
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 🔔 ALERTES EN TEMPS RÉEL")
+        
+        for _, crypto in self.current_data.iterrows():
+            if abs(crypto['change_pct']) > alert_threshold:
+                alert_type = "warning" if crypto['change_pct'] > 0 else "error"
+                if alert_type == "warning":
+                    st.sidebar.warning(
+                        f"{crypto['icone']} {crypto['symbole']}: "
+                        f"{crypto['change_pct']:+.2f}%"
+                    )
+                else:
+                    st.sidebar.error(
+                        f"{crypto['icone']} {crypto['symbole']}: "
+                        f"{crypto['change_pct']:+.2f}%"
+                    )
+        
+        return {
+            'categories_selectionnees': categories_selectionnees,
+            'date_debut': date_debut,
+            'date_fin': date_fin,
+            'auto_refresh': auto_refresh,
+            'show_advanced': show_advanced,
+            'alert_threshold': alert_threshold
+        }
+    
+    def create_market_analysis(self):
+        """Analyse des marchés crypto"""
+        st.markdown('<h3 class="section-header">🌍 ANALYSE DES MARCHÉS CRYPTO</h3>', 
+                   unsafe_allow_html=True)
+        
+        tab1, tab2 = st.tabs(["Indices Crypto", "Analyse Macro"])
+        
+        with tab1:
+            st.subheader("Indices du Marché Crypto")
+            
+            cols = st.columns(3)
+            indices_list = list(self.market_data['indices'].items())
+            
+            for i, (indice, data) in enumerate(indices_list):
+                with cols[i % 3]:
+                    data['change'] = random.uniform(-5, 5)  # Mise à jour simulée
+                    st.metric(
+                        indice,
+                        f"{data['valeur']:.1f}",
+                        f"{data['change']:+.2f}%",
+                        delta_color="normal"
+                    )
+        
+        with tab2:
+            st.subheader("Facteurs Macroéconomiques")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                ### 📈 Facteurs Haussiers
+                
+                **🏦 Adoption Institutionnelle:**
+                - ETFs Bitcoin approuvés
+                - Entreprises Fortune 500
+                - Gestionnaires d'actifs traditionnels
+                
+                **🌐 Régulation Favorable:**
+                - Cadres légaux clairs
+                - Protection des investisseurs
+                - Stabilité juridique
+                
+                **💰 Innovation Technologique:**
+                - Scalabilité améliorée
+                - Solutions Layer 2
+                - Interopérabilité
+                """)
+            
+            with col2:
+                st.markdown("""
+                ### 📉 Facteurs Baissiers
+                
+                **⚖️ Régulation Stricte:**
+                - Interdictions partielles
+                - Taxes élevées
+                - Restrictions bancaires
+                
+                **🔒 Cybersécurité:**
+                - Hacks et vols
+                - Vulnérabilités smart contracts
+                - Perte de confiance
+                
+                **📉 Volatilité Extrême:**
+                - Manipulation de marché
+                - Liquidations massives
+                - Paniques collectives
+                """)
+    
+    def create_risk_analysis(self):
+        """Analyse des risques"""
+        st.markdown('<h3 class="section-header">⚠️ ANALYSE DES RISQUES</h3>', 
+                   unsafe_allow_html=True)
+        
+        tab1, tab2, tab3 = st.tabs(["Risques par Crypto", "Stress Tests", "Stratégies"])
+        
+        with tab1:
+            st.subheader("Évaluation des Risques par Cryptomonnaie")
+            
+            risk_data = []
+            for symbole, info in self.cryptos.items():
+                risk_score = random.randint(20, 90)
+                risk_level = "FAIBLE" if risk_score < 40 else "MOYEN" if risk_score < 70 else "ÉLEVÉ"
+                
+                risk_data.append({
+                    'Cryptomonnaie': info['nom'],
+                    'Symbole': symbole,
+                    'Score Risque': risk_score,
+                    'Niveau': risk_level,
+                    'Risque Réglementaire': random.randint(10, 80),
+                    'Risque Technologique': random.randint(15, 75),
+                    'Risque de Marché': random.randint(20, 85)
+                })
+            
+            risk_df = pd.DataFrame(risk_data)
+            st.dataframe(risk_df, width='stretch')
+        
+        with tab2:
+            st.subheader("Scénarios de Stress Test")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                ### 📉 Scénario Bear Market
+                
+                **Hypothèses:**
+                - Bitcoin -70%
+                - Altcoins -85%
+                - Volume -60%
+                - Fuite des capitaux
+                
+                **Impacts:**
+                - Liquidations massives
+                - Faillite d'exchanges
+                - Perte de confiance
+                - Régulation renforcée
+                
+                **Probabilité:** 30%
+                """)
+            
+            with col2:
+                st.markdown("""
+                ### 📈 Scénario Bull Run
+                
+                **Hypothèses:**
+                - Bitcoin +300%
+                - Altcoins +500%
+                - Volume +400%
+                - Adoption massive
+                
+                **Impacts:**
+                - Nouveaux records
+                - Institutionnalisation
+                - Innovation accélérée
+                - Médias positifs
+                
+                **Probabilité:** 25%
+                """)
+        
+        with tab3:
+            st.subheader("Stratégies de Gestion des Risques")
+            
+            st.markdown("""
+            ### 🛡️ Approches de Sécurité
+            
+            **🔐 Diversification:**
+            - Allocation multi-actifs
+            - Différentes catégories
+            - Répartition géographique
+            
+            **⏱️ Dollar Cost Averaging:**
+            - Investissements réguliers
+            - Lissage de la volatilité
+            - Discipline d'investissement
+            
+            **🔒 Stockage Sécurisé:**
+            - Cold storage
+            - Hardware wallets
+            - Multi-signatures
+            
+            **📊 Analyse Technique:**
+            - Points d'entrée/sortie
+                - Stop-loss
+                - Take-profit
+                - Gestion de position
+            """)
+    
+    def run_dashboard(self):
+        """Exécute le dashboard complet"""
+        # Mise à jour des données
+        self.update_live_data()
+        
+        # Sidebar
+        controls = self.create_sidebar()
+        
+        # Header
+        self.display_header()
+        
+        # Cartes de cryptomonnaies
+        self.display_crypto_cards()
+        
+        # Métriques clés
+        self.display_key_metrics()
+        
+        # Navigation par onglets
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            "📈 Vue d'Ensemble", 
+            "⛓️ Blockchains", 
+            "🔬 Technique", 
+            "🌍 Marchés", 
+            "⚠️ Risques", 
+            "💡 Insights"
+        ])
+        
+        with tab1:
+            self.create_price_overview()
+        
+        with tab2:
+            self.create_blockchain_analysis()
+        
+        with tab3:
+            self.create_technical_analysis()
+        
+        with tab4:
+            self.create_market_analysis()
+        
+        with tab5:
+            self.create_risk_analysis()
+        
+        with tab6:
+            st.markdown("## 💡 INSIGHTS STRATÉGIQUES")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("""
+                ### 🎯 Tendances du Marché
+                
+                **📊 Adoption Croissante:**
+                - ETFs gagnent en popularité
+                - Entreprises traditionnelles s'intéressent
+                - Gouvernements explorent la CBDC
+                
+                **🔗 DeFi 2.0:**
+                - Solutions de scalabilité
+                - Interopérabilité entre chaînes
+                - Yield farming optimisé
+                
+                **🎮 Gaming & Metaverse:**
+                - Play-to-earn évolue
+                - Actifs numériques vérifiables
+                - Économies virtuelles
+                """)
+            
+            with col2:
+                st.markdown("""
+                ### 🚀 Opportunités d'Investissement
+                
+                **🌐 Layer 1 Émergents:**
+                - Blockchains spécialisées
+                - Consensus innovants
+                - Écosystèmes en croissance
+                
+                **🔐 Solutions de Confidentialité:**
+                - ZK-proofs
+                - Transactions privées
+                - Protection des données
+                
+                **⚡ Infrastructure Web3:**
+                - Stockage décentralisé
+                - Oracles fiables
+                - Interopérabilité
+                """)
+            
+            st.markdown("---")
+            
+            st.subheader("📈 Prévisions et Perspectives")
+            
+            st.markdown("""
+            ### 🎯 Scénario Base (Probabilité: 45%)
+            
+            **2024-2025:**
+            - Bitcoin atteint $100,000
+            - Ethereum dépasse $5,000
+            - Capitalisation totale > $5T
+            - Adoption institutionnelle continue
+            
+            **Facteurs clés:**
+            - ETFs bien reçus
+            - Régulation équilibrée
+            - Innovation technologique
+            - Stabilité macroéconomique
+            
+            ### ⚠️ Points de Vigilance
+            
+            **🔴 Risques Réglementaires:**
+            - Surveillance accrue
+            - Taxation des plus-values
+            - Restrictions géographiques
+            
+            **🟡 Risques Technologiques:**
+            - Failles de sécurité
+                - Problèmes de scalabilité
+                - Bugs dans les smart contracts
+                
+            **🟢 Opportunités:**
+            - Nouveaux cas d'usage
+            - Partenariats stratégiques
+            - Innovation continue
+            """)
 
 # Exécution du dashboard
 if __name__ == "__main__":
     dashboard = CryptoDashboard()
-    dashboard.run()
+    dashboard.run_dashboard()
