@@ -1,4 +1,4 @@
-# Dashboard_40-Crypto-Changes
+# Dashboard_40-Crypto-Changes ( USD ) 
 ₿ DASHBOARD TOP 40 CRYPTOMONNAIES - MARCHÉ DES CRYPTO-ACTIFS 🔴 SURVEILLANCE EN TEMPS RÉEL DES 40 PRINCIPALES CRYPTOMONNAIES
 <img width="662" height="465" alt="Screenshot_2025-10-14_07-17-41" src="https://github.com/user-attachments/assets/2735bf6e-179c-4f6c-ba6d-845f3e2db2e9" />
 
